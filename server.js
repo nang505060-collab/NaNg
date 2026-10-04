@@ -4,12 +4,14 @@ const path = require('path');
 const app = express();
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// កំណត់ឱ្យ Server អានឯកសារ HTML នៅកន្លែង Root ផ្ទាល់តែម្តង
+app.use(express.static(__dirname));
 
-// Bakong API Configuration (ជំនួសដោយ Token របស់អ្នក)
+// Bakong API Configuration (ជំនួសដោយ Token ពិតរបស់អ្នក)
 const BAKONG_TOKEN = 'eyJhbGciOiJIUzI1NiIs...'; 
 const BAKONG_ACCOUNT_ID = 'samnang_mon@bkrt';
 
+// Database ក្លែងក្លាយសម្រាប់ស្តុក Account
 let accountStock = {
     'netflix': [
         { id: 1, info: 'Email: netflix1@gmail.com | Pass: 123456' },
@@ -52,6 +54,7 @@ app.post('/api/create-payment', async (req, res) => {
             res.status(400).json({ success: false, message: 'បរាជ័យក្នុងការបង្កើត KHQR' });
         }
     } catch (error) {
+        // Mock QR សម្រាប់ពេលតេស្ត ឬករណី API មិនទាន់ឆ្លើយតប
         res.json({
             success: true,
             qrString: "00020101021230640016COM.EXCHANGE.KH@BKRT0110samnang_mon0208samnang_mon53038405802KH5912Samnang Mon6010Phnom Penh6304...",
@@ -64,7 +67,7 @@ app.post('/api/create-payment', async (req, res) => {
 
 app.post('/api/check-payment', async (req, res) => {
     const { md5, productId } = req.body;
-    let isPaid = true; 
+    let isPaid = true; // កំណត់ថាបានបង់លុយរួចរាល់ (សម្រាប់ការតេស្ត)
 
     if (isPaid) {
         const stockList = accountStock[productId];
