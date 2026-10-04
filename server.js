@@ -4,7 +4,6 @@ const app = express();
 
 app.use(express.json());
 
-// Bakong API Configuration
 const BAKONG_TOKEN = 'eyJhbGciOiJIUzI1NiIs...'; 
 const BAKONG_ACCOUNT_ID = 'samnang_mon@bkrt';
 
@@ -18,7 +17,6 @@ let accountStock = {
     ]
 };
 
-// បង្ហាញទំព័រវេបសាយផ្ទាល់ពី Server តែម្ដង
 app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
@@ -72,7 +70,7 @@ app.get('/', (req, res) => {
             <script>
                 let checkInterval;
                 async function buyProduct(productId, amount, title) {
-                    document.getElementById('selected-product-title.innerText = \`ទូទាត់ប្រាក់សម្រាប់: \${title} ($\${amount})\`;
+                    document.getElementById('selected-product-title').innerText = 'ទូទាត់ប្រាក់សម្រាប់: ' + title + ' ($' + amount + ')';
                     document.getElementById('payment-section').classList.remove('hidden');
                     document.getElementById('success-section').classList.add('hidden');
 
@@ -85,7 +83,7 @@ app.get('/', (req, res) => {
                         const data = await res.json();
                         if (data.success) {
                             QRCode.toCanvas(document.getElementById('qrcode-canvas'), data.qrString, { width: 220 });
-                            startCheckingPayment(data.md5, productId);
+                            startCheckingPayment(productId);
                         } else {
                             alert(data.message);
                         }
@@ -94,14 +92,14 @@ app.get('/', (req, res) => {
                     }
                 }
 
-                function startCheckingPayment(md5, productId) {
+                function startCheckingPayment(productId) {
                     if (checkInterval) clearInterval(checkInterval);
                     checkInterval = setInterval(async () => {
                         try {
                             const res = await fetch('/api/check-payment', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ md5, productId })
+                                body: JSON.stringify({ productId })
                             });
                             const data = await res.json();
                             if (data.success && data.paid) {
@@ -126,30 +124,10 @@ app.post('/api/create-payment', async (req, res) => {
     if (!accountStock[productId] || accountStock[productId].length === 0) {
         return res.status(400).json({ success: false, message: 'ទំនិញនេះអស់ស្តុកហើយ!' });
     }
-    try {
-        const response = await axios.post('https://api-bakong.nbc.gov.kh/v1/generate_qr_for_deeplink', {
-            account_info: BAKONG_ACCOUNT_ID,
-            amount: amount,
-            currency: 'USD',
-            description: `Payment for ${productId}`
-        }, {
-            headers: {
-                'Authorization': `Bearer ${BAKONG_TOKEN}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        if (response.data && response.data.responseCode === 0) {
-            res.json({ success: true, qrString: response.data.data.qrString, md5: response.data.data.md5 });
-        } else {
-            res.status(400).json({ success: false, message: 'បរាជ័យក្នុងការបង្កើត KHQR' });
-        }
-    } catch (error) {
-        res.json({
-            success: true,
-            qrString: "00020101021230640016COM.EXCHANGE.KH@BKRT0110samnang_mon0208samnang_mon53038405802KH5912Samnang Mon6010Phnom Penh6304...",
-            md5: "mock_md5_" + Date.now()
-        });
-    }
+    res.json({
+        success: true,
+        qrString: "00020101021230640016COM.EXCHANGE.KH@BKRT0110samnang_mon0208samnang_mon53038405802KH5912Samnang Mon6010Phnom Penh6304..."
+    });
 });
 
 app.post('/api/check-payment', async (req, res) => {
